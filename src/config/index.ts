@@ -4,6 +4,10 @@ import path from "path";
 // Load environment variables from .env file
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
+// Get ngrok URL from environment or use a default for local development
+const ngrokUrl =
+  process.env.NGROK_URL || "https://532d-45-64-161-36.ngrok-free.app";
+
 export const config = {
   port: process.env.PORT || 5000,
   twilio: {
@@ -12,6 +16,7 @@ export const config = {
     apiKey: process.env.TWILIO_API_KEY || "",
     apiSecret: process.env.TWILIO_API_SECRET || "",
     appSid: process.env.TWILIO_APP_SID || "",
+    voiceUrl: `${ngrokUrl}/api/twilio/voice`,
   },
   clientUrl: process.env.CLIENT_URL || "http://localhost:3000",
 };

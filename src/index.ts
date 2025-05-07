@@ -6,7 +6,18 @@ import twilioRoutes from "./routes/twilioRoutes";
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      new URL(config.clientUrl).origin,
+    ],
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -21,6 +32,7 @@ app.get("/health", (req, res) => {
 // Start the server
 app.listen(config.port, () => {
   console.log(`Server running on port ${config.port}`);
+  console.log(`Voice URL: ${config.twilio.voiceUrl}`);
 });
 
 export default app;
