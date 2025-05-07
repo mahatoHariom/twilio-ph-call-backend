@@ -4,12 +4,35 @@ import path from "path";
 // Load environment variables from .env file
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
-// Get ngrok URL from environment or use a default for local development
-const ngrokUrl =
-  process.env.NGROK_URL || "https://532d-45-64-161-36.ngrok-free.app";
+/**
+ * Required environment variables for the application to function
+ * These will be validated at startup
+ */
+const REQUIRED_ENV_VARS = [
+  "TWILIO_ACCOUNT_SID",
+  "TWILIO_AUTH_TOKEN",
+  "TWILIO_API_KEY",
+  "TWILIO_API_SECRET",
+  "TWILIO_APP_SID",
+] as const;
 
+/**
+ * Get ngrok URL from environment or use a default for local development
+ */
+const ngrokUrl = process.env.NGROK_URL || "";
+
+/**
+ * Application configuration object
+ */
 export const config = {
-  port: process.env.PORT || 5000,
+  /**
+   * Server port to listen on
+   */
+  port: parseInt(process.env.PORT || "9000", 10),
+
+  /**
+   * Twilio configuration settings
+   */
   twilio: {
     accountSid: process.env.TWILIO_ACCOUNT_SID || "",
     authToken: process.env.TWILIO_AUTH_TOKEN || "",
@@ -18,20 +41,30 @@ export const config = {
     appSid: process.env.TWILIO_APP_SID || "",
     voiceUrl: `${ngrokUrl}/api/twilio/voice`,
   },
-  clientUrl: process.env.CLIENT_URL || "http://localhost:3000",
+
+  /**
+   * Client URL for CORS configuration
+   */
+  clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
+
+  /**
+   * ngrok URL for tunneling to localhost (used for Twilio webhooks)
+   */
+  ngrokUrl,
 };
 
 // Validate required environment variables
-const requiredEnvVars = [
-  "TWILIO_ACCOUNT_SID",
-  "TWILIO_AUTH_TOKEN",
-  "TWILIO_API_KEY",
-  "TWILIO_API_SECRET",
-  "TWILIO_APP_SID",
-];
+const missingVars = REQUIRED_ENV_VARS.filter((envVar) => !process.env[envVar]);
 
-for (const envVar of requiredEnvVars) {
-  if (!process.env[envVar]) {
-    console.warn(`Warning: Environment variable ${envVar} is not set.`);
-  }
+if (missingVars.length > 0) {
+  console.warn(
+    `Warning: Missing required environment variables: ${missingVars.join(", ")}`
+  );
+  console.warn(
+    "The application may not function correctly without these variables set."
+  );
 }
+
+// Export configuration types for better type safety throughout the app
+export type Config = typeof config;
+export type TwilioConfig = typeof config.twilio;
