@@ -6,14 +6,11 @@ import logger from "./utils/logger";
 
 const app = express();
 
-const corsOptions = {
-  origin: ["http://localhost:5173", new URL(config.clientUrl).origin],
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-};
-
-app.use(cors(corsOptions));
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -28,8 +25,6 @@ app.get("/health", (req, res) => {
 
 app.listen(config.port, () => {
   logger.info(`Server running on port ${config.port}`);
-  logger.info(`Twilio Voice URL: ${config.twilio.voiceUrl}`);
-
   if (process.env.NODE_ENV === "development") {
     logger.debug(`Health check: http://localhost:${config.port}/health`);
   }

@@ -17,11 +17,6 @@ const REQUIRED_ENV_VARS = [
 ] as const;
 
 /**
- * Get ngrok URL from environment or use a default for local development
- */
-const ngrokUrl = process.env.NGROK_URL || "";
-
-/**
  * Application configuration object
  */
 export const config = {
@@ -39,18 +34,12 @@ export const config = {
     apiKey: process.env.TWILIO_API_KEY || "",
     apiSecret: process.env.TWILIO_API_SECRET || "",
     appSid: process.env.TWILIO_APP_SID || "",
-    voiceUrl: `${ngrokUrl}/api/twilio/voice`,
   },
 
   /**
    * Client URL for CORS configuration
    */
   clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
-
-  /**
-   * ngrok URL for tunneling to localhost (used for Twilio webhooks)
-   */
-  ngrokUrl,
 };
 
 // Validate required environment variables
