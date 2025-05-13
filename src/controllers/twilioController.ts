@@ -58,7 +58,30 @@ export const voiceResponse = (req: Request, res: Response): void => {
     }
 
     // Handle different call scenarios
-    if (to.startsWith("client:")) {
+    if (to.startsWith("conference:")) {
+      // Conference call handling
+      const conferenceName = to.replace("conference:", "");
+      logger.info(`Joining conference: ${conferenceName}`);
+
+      const dial = response.dial({
+        callerId,
+        answerOnBridge: true,
+        timeout: 20,
+      });
+
+      // Create a conference
+      const conf = dial.conference(conferenceName);
+      // Set conference attributes
+      conf.set("startConferenceOnEnter", true);
+      conf.set("endConferenceOnExit", false);
+      conf.set(
+        "waitUrl",
+        "https://twimlets.com/holdmusic?Bucket=com.twilio.music.classical"
+      );
+      conf.set("maxParticipants", 10);
+
+      logger.info(`Added user to conference: ${conferenceName}`);
+    } else if (to.startsWith("client:")) {
       // Direct client-to-client call
       const clientId = to.replace("client:", "");
       logger.info(`Dialing to client: ${clientId}`);
@@ -164,6 +187,80 @@ export const incomingCall = (req: Request, res: Response): void => {
       "We encountered an error processing your call. Please try again later."
     );
     res.type("text/xml").send(response.toString());
+  }
+};
+
+// Endpoint to get active conferences
+export const getConferences = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const client = twilio(config.twilio.accountSid, config.twilio.authToken);
+
+    // Get a list of active conferences
+    const conferences = await client.conferences.list({
+      status: "in-progress",
+      limit: 20,
+    });
+
+    logger.info(`Retrieved ${conferences.length} active conferences`);
+
+    // Map conferences to a simpler format
+    const conferenceList = conferences.map((conf) => ({
+      name: conf.friendlyName,
+      sid: conf.sid,
+      participantsCount:
+        conf.participants !== undefined ? conf.participants : 0,
+      dateCreated: conf.dateCreated,
+      status: conf.status,
+    }));
+
+    res.json({ conferences: conferenceList });
+  } catch (error) {
+    logger.error("Error retrieving conferences", error);
+    res.status(500).json({ error: "Failed to retrieve conferences" });
+  }
+};
+
+// Endpoint to get participants in a specific conference
+export const getConferenceParticipants = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { conferenceSid } = req.params;
+
+    if (!conferenceSid) {
+      res.status(400).json({ error: "Conference SID is required" });
+      return;
+    }
+
+    const client = twilio(config.twilio.accountSid, config.twilio.authToken);
+
+    // Get participants for the specified conference
+    const participants = await client
+      .conferences(conferenceSid)
+      .participants.list();
+
+    logger.info(
+      `Retrieved ${participants.length} participants for conference ${conferenceSid}`
+    );
+
+    // Map participants to a simpler format
+    const participantList = participants.map((p) => ({
+      callSid: p.callSid,
+      label: p.label || "Unknown",
+      startTime: p.dateCreated,
+      muted: p.muted,
+    }));
+
+    res.json({ participants: participantList });
+  } catch (error) {
+    logger.error(`Error retrieving conference participants: ${error}`);
+    res
+      .status(500)
+      .json({ error: "Failed to retrieve conference participants" });
   }
 };
 

@@ -40,6 +40,8 @@ export const config = {
    * Client URL for CORS configuration
    */
   clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
+
+  serverUrl: process.env.BASE_URL || "http://localhost:9000",
 };
 
 // Validate required environment variables
