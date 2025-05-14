@@ -78,6 +78,11 @@ export const voiceResponse = (req: Request, res: Response): void => {
           waitUrl:
             "https://twimlets.com/holdmusic?Bucket=com.twilio.music.classical",
           maxParticipants: 10,
+          // Add enhanced audio settings to reduce echo
+          beep: "false", // Disable the beep sound when participants join
+          muted: false, // Start unmuted
+          jitterBufferSize: "large", // Use a large jitter buffer for better audio quality
+          region: "us1", // Use a specific region for better latency
         },
         conferenceName
       );

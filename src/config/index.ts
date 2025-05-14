@@ -41,7 +41,7 @@ export const config = {
    */
   clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
 
-  serverUrl: "https://354e-43-231-211-135.ngrok-free.app",
+  serverUrl: "https://dea6-43-231-211-135.ngrok-free.app",
 };
 
 // Validate required environment variables
