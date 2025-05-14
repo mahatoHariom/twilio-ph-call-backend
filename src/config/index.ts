@@ -34,6 +34,8 @@ export const config = {
     apiKey: process.env.TWILIO_API_KEY || "",
     apiSecret: process.env.TWILIO_API_SECRET || "",
     appSid: process.env.TWILIO_APP_SID || "",
+    // Verified caller ID to use when making outbound calls to phone numbers
+    callerId: process.env.TWILIO_CALLER_ID || "",
   },
 
   /**
@@ -41,7 +43,11 @@ export const config = {
    */
   clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
 
-  serverUrl: "https://dea6-43-231-211-135.ngrok-free.app",
+  /**
+   * Server URL for callbacks
+   * Replace with your actual server URL (e.g., ngrok URL for development or production URL)
+   */
+  serverUrl: process.env.SERVER_URL || "http://localhost:9000",
 };
 
 // Validate required environment variables
