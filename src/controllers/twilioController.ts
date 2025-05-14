@@ -59,26 +59,29 @@ export const voiceResponse = (req: Request, res: Response): void => {
       return;
     }
 
+    // Common dial options for all calls
+    const commonDialOptions = {
+      callerId,
+      answerOnBridge: true, // Ensures media streams directly between clients
+      timeout: 20,
+      // Add status callback for all call types to improve call state tracking
+      statusCallbackEvent: ["initiated", "ringing", "answered", "completed"],
+      statusCallback: `${config.serverUrl}/status`,
+      statusCallbackMethod: "POST",
+    };
+
     // Handle different call scenarios
     if (to.startsWith("client:")) {
       // Direct client-to-client call
       const clientId = to.replace("client:", "");
       logger.info(`Dialing to client: ${clientId}`);
 
-      const dial = response.dial({
-        callerId,
-        answerOnBridge: true, // This ensures media streams directly between clients
-        timeout: 20,
-      });
-
+      const dial = response.dial(commonDialOptions);
       dial.client(clientId);
     } else if (to.startsWith("sip:")) {
       // SIP call (if needed in the future)
       logger.info(`Dialing to SIP: ${to}`);
-      const dial = response.dial({
-        callerId,
-        answerOnBridge: true,
-      });
+      const dial = response.dial(commonDialOptions);
       dial.sip(to);
     } else {
       // Regular phone number call
@@ -102,11 +105,13 @@ export const voiceResponse = (req: Request, res: Response): void => {
         );
       }
 
-      const dial = response.dial({
+      // Override caller ID for phone calls if needed
+      const phoneDialOptions = {
+        ...commonDialOptions,
         callerId: isPhoneNumber ? config.twilio.callerId || callerId : callerId, // For phone calls, always use verified number
-        answerOnBridge: true,
-        timeout: 20,
-      });
+      };
+
+      const dial = response.dial(phoneDialOptions);
 
       if (isPhoneNumber) {
         // Regular phone number call
@@ -116,20 +121,7 @@ export const voiceResponse = (req: Request, res: Response): void => {
           }`
         );
 
-        dial.number(
-          {
-            // Optional parameters for better call quality and tracking
-            statusCallbackEvent: [
-              "initiated",
-              "ringing",
-              "answered",
-              "completed",
-            ],
-            statusCallback: `${config.serverUrl}/status`,
-            statusCallbackMethod: "POST",
-          },
-          to
-        );
+        dial.number({}, to);
       } else {
         // Assume it's a client identifier without the "client:" prefix
         logger.info(`Making call to client: ${to}`);
@@ -211,11 +203,35 @@ export const incomingCall = (req: Request, res: Response): void => {
 export const callStatus = (req: Request, res: Response): void => {
   const callSid = req.body.CallSid;
   const callStatus = req.body.CallStatus;
+  const from = req.body.From;
+  const to = req.body.To;
 
-  logger.info(`Call status update for ${callSid}: ${callStatus}`);
+  logger.info(
+    `Call status update for ${callSid}: ${callStatus} from ${from} to ${to}`
+  );
 
-  // You can implement specific handling for different call statuses here
-  // For example, logging to a database, triggering notifications, etc.
+  // Enhanced handling for different call statuses
+  switch (callStatus) {
+    case "completed":
+    case "busy":
+    case "no-answer":
+    case "canceled":
+    case "failed":
+      logger.info(`Call ${callSid} ended with status: ${callStatus}`);
+      // In a production app, you could notify clients through a WebSocket here
+      break;
+    case "in-progress":
+      logger.info(`Call ${callSid} is in progress`);
+      break;
+    case "ringing":
+      logger.info(`Call ${callSid} is ringing`);
+      break;
+    case "initiated":
+      logger.info(`Call ${callSid} initiated`);
+      break;
+    default:
+      logger.info(`Call ${callSid} has status: ${callStatus}`);
+  }
 
   // Send an empty response to acknowledge receipt
   res.sendStatus(200);
