@@ -69,16 +69,18 @@ export const voiceResponse = (req: Request, res: Response): void => {
         timeout: 20,
       });
 
-      // Create a conference
-      const conf = dial.conference(conferenceName);
-      // Set conference attributes
-      conf.set("startConferenceOnEnter", true);
-      conf.set("endConferenceOnExit", false);
-      conf.set(
-        "waitUrl",
-        "https://twimlets.com/holdmusic?Bucket=com.twilio.music.classical"
+      // Create a conference with attributes directly in the constructor
+      // This is the correct way to set conference attributes in Twilio TwiML
+      dial.conference(
+        {
+          startConferenceOnEnter: true,
+          endConferenceOnExit: false,
+          waitUrl:
+            "https://twimlets.com/holdmusic?Bucket=com.twilio.music.classical",
+          maxParticipants: 10,
+        },
+        conferenceName
       );
-      conf.set("maxParticipants", 10);
 
       logger.info(`Added user to conference: ${conferenceName}`);
     } else if (to.startsWith("client:")) {
