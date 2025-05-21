@@ -1,0 +1,31 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model CallReservation {
+  id              Int      @id @default(autoincrement())
+  username        String
+  reservationDate String // Date in format YYYY-MM-DD
+  startTime       String // Time in format HH:MM
+  endTime         String // Time in format HH:MM
+  status          String   @default("scheduled") // scheduled, ongoing, completed, cancelled
+  phoneNumber     String? // Optional phone number for the call
+  callDuration    Int? // Duration in seconds once call is completed
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([username])
+  @@index([reservationDate, startTime])
+  @@index([status])
+}
